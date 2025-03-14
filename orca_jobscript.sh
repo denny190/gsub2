@@ -71,8 +71,19 @@ echo "cd \$SCRATCHDIR || exit 2
 module add orca/6.0.1
 # Run ORCA using its full path
 \$(which orca) $FILENAME.$EXTENSION > $FILENAME.out
-# Copy back the output and checkpoint files to the original directory
-cp $FILENAME.out $FILENAME.gbw $DATADIR || export CLEAN_SCRATCH=false" >> ${DATADIR}/${FILENAME}.sh
+
+# Define an array of expected output files
+output_files=(\"$FILENAME.out\" \"$FILENAME.gbw\" \"$FILENAME.densities\" \"$FILENAME.hess\" \"$FILENAME.prop\")
+
+# Copy each file back to the original directory if it exists
+for file in \"\${output_files[@]}\"
+do
+  if [ -e \"\$file\" ]; then
+    cp \"\$file\" \"$DATADIR/\"
+  else
+    echo \"Warning: \$file not found and will not be copied.\"
+  fi
+done" >> ${DATADIR}/${FILENAME}.sh
 
 echo "[INFO] Submit script '$DATADIR/${FILENAME}.sh' generated."
 
@@ -128,6 +139,4 @@ qsub -l select=1:ncpus=${CPU}:mem=${MEMR}gb:scratch_local=${SCRATCH}gb -l wallti
 # echo "[INFO] Removing '$DATADIR/${FILENAME}.sh'."
 # rm $DATADIR/$FILENAME.sh 
 
-echo
-::contentReference[oaicite:4]{index=4}
- 
+
