@@ -72,18 +72,26 @@ module add orca/6.0.1
 # Run ORCA using its full path
 \$(which orca) $FILENAME.$EXTENSION > $FILENAME.out
 
-# Define an array of expected output files
-output_files=(\"$FILENAME.out\" \"$FILENAME.gbw\" \"$FILENAME.densities\" \"$FILENAME.hess\" \"$FILENAME.prop\")
-
-# Copy each file back to the original directory if it exists
-for file in \"\${output_files[@]}\"
-do
-  if [ -e \"\$file\" ]; then
-    cp \"\$file\" \"$DATADIR/\"
+# Copy .out and .gbw files to the data directory
+for ext in out gbw; do
+  if [ -e \"$FILENAME.\$ext\" ]; then
+    cp \"$FILENAME.\$ext\" \"$DATADIR/\"
   else
-    echo \"Warning: \$file not found and will not be copied.\"
+    echo \"Warning: $FILENAME.\$ext not found and will not be copied.\"
   fi
-done" >> ${DATADIR}/${FILENAME}.sh
+done
+
+# Create a compressed tarball of all files except .tmp files
+archive_name=\"$FILENAME\_archive_\$(date +%Y%m%d%H%M%S).tar.gz\"
+tar --exclude='*.tmp' -czf \"\$archive_name\" *
+
+# Check if the archive was created successfully and copy it to the data directory
+if [ -e \"\$archive_name\" ]; then
+  cp \"\$archive_name\" \"$DATADIR/\"
+else
+  echo \"Warning: Archive \$archive_name was not created.\"
+fi" >> ${DATADIR}/${FILENAME}.sh
+
 
 echo "[INFO] Submit script '$DATADIR/${FILENAME}.sh' generated."
 
